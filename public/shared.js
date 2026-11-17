@@ -43,6 +43,9 @@ function score(t, f) {
   return s + (t.recruiting ? 0.5 : 0);
 }
 
+// 누르면 클립보드에 복사되는 글자 (전화번호·이메일 같은 링크가 아닌 연락처용). 클릭 처리는 app.js.
+const copyButton = (text) => `<button type="button" class="copy" data-copy="${esc(text)}" title="눌러서 복사">${esc(text)}</button>`;
+
 // 팀 카드. 브라우저(결과 목록)와 서버(지역별 페이지)가 같이 쓴다. edit=true면 수정 요청 버튼을 붙인다.
 function card(t, edit) {
   const join = /^https?:\/\//.test(t.contact || '') ? t.contact : t.instagram;
@@ -58,7 +61,7 @@ function card(t, edit) {
     ${t.note ? `<p class="note">${esc(t.note)}</p>` : ''}
     ${t.memo ? `<p class="memo${edit ? ' clamp' : ''}">${esc(t.memo)}</p>` : ''}
     ${t.coach_info ? `<p class="meta">코치 · ${esc(t.coach_info)}</p>` : ''}
-    ${t.contact && join !== t.contact ? `<p class="meta">문의 · ${esc(t.contact)}</p>` : ''}
+    ${t.contact && join !== t.contact ? `<p class="meta">문의 · ${edit ? copyButton(t.contact) : esc(t.contact)}</p>` : ''}
     <div class="card-foot">
       ${join ? `<a class="btn primary" href="${esc(join)}" ${ext}>가입 문의</a>` : t.source_url ? `<a class="btn" href="${esc(t.source_url)}" ${ext}>${/daangn\.com/.test(t.source_url) ? '모집글 보기' : '출처 보기'}</a>` : ''}
       ${t.instagram && join !== t.instagram ? `<a class="btn" href="${esc(t.instagram)}" ${ext}>인스타그램</a>` : ''}

@@ -180,7 +180,7 @@ function detailDialog(t) {
     ['소개', esc(t.note || '')],
     ['메모', esc(t.memo || '')],
     ['인스타그램', t.instagram ? link(t.instagram) : ''],
-    ['가입 문의', !t.contact ? '' : /^https?:\/\//.test(t.contact) ? link(t.contact) : esc(t.contact)],
+    ['가입 문의', !t.contact ? '' : /^https?:\/\//.test(t.contact) ? link(t.contact) : copyButton(t.contact)],
     ['출처', t.source_url ? link(t.source_url) : ''],
     ['정보 수정일', esc((t.updated_at || '').slice(0, 10))],
   ].filter((r) => r[1]);
@@ -305,6 +305,17 @@ app.addEventListener('change', (e) => {
   f[key] = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
   if (f.region !== '서울') f.district = '';
   render();
+});
+
+// 연락처 복사: 카드와 자세히 보기 창 양쪽에서 동작하도록 문서 전체에서 받는다
+document.addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-copy]');
+  if (!b || b.dataset.busy) return;
+  let done = '복사됐어요';
+  try { await navigator.clipboard.writeText(b.dataset.copy); } catch { done = '복사하지 못했어요. 길게 눌러 복사해 주세요'; }
+  b.dataset.busy = '1';
+  b.textContent = done;
+  setTimeout(() => { b.textContent = b.dataset.copy; delete b.dataset.busy; }, 1600);
 });
 
 document.getElementById('addBtn').onclick = () => requestDialog(null);

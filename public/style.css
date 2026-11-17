@@ -191,3 +191,7 @@ thead th { color: var(--text-3); font-weight: 500; font-size: 12px; }
 .detail dt { color: var(--text-3); }
 .detail dd { margin: 0; white-space: pre-line; overflow-wrap: anywhere; }
 .detail dd a { color: inherit; text-underline-offset: 4px; }
+
+/* 눌러서 복사하는 연락처 */
+.copy { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; text-decoration: underline dotted; text-underline-offset: 4px; cursor: copy; overflow-wrap: anywhere; user-select: text; }
+.copy:hover { color: var(--text); }
