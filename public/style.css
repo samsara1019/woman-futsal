@@ -173,3 +173,7 @@ thead th { color: var(--text-3); font-weight: 500; font-size: 12px; }
 .tile:disabled { background: transparent; color: var(--text-3); cursor: default; }
 .tile[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
 @media (max-width: 520px) { .filters .map-toggle { grid-column: 1 / -1; margin-left: 0; } }
+
+/* 등록 폼: 같은 이름의 팀이 이미 있을 때 묻는 상자 */
+.same { display: grid; gap: 12px; padding: 16px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--raised); font-size: 14px; }
+.same div { display: flex; flex-wrap: wrap; gap: 8px; }

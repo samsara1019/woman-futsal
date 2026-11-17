@@ -56,9 +56,14 @@ const { score } = require('./public/shared.js');
   assert.equal((await fetch(base + '/teams/' + encodeURIComponent('없는곳'))).status, 404);
   assert.ok((await (await fetch(base + '/sitemap.xml')).text()).includes('/teams/%EC%84%9C%EC%9A%B8</loc>'));
 
+  const sameName = { type: 'add', payload: { name: '테스트FC', region: '서울', contact: 'https://open.kakao.com/o/x' } };
+  assert.equal((await call('POST', '/api/requests', sameName))[0], 409, '같은 지역 같은 이름은 기본적으로 막음');
+  assert.equal((await call('POST', '/api/requests', { ...sameName, confirm_new: true }))[0], 201, '다른 팀이라고 확인하면 접수');
+  assert.equal((await call('POST', '/api/requests', { type: 'add', confirm_new: true, payload: { name: '테스트FC2', region: '서울', instagram: '@test_fc_zz' } }))[0], 409, '인스타가 같으면 확인해도 막음');
+
   const codes = [];
   for (let i = 0; i < 6; i++) codes.push((await add(`스팸${i}`, `spam_${i}`))[0]);
-  assert.deepEqual(codes, [201, 201, 201, 429, 429, 429], 'IP당 하루 5건');
+  assert.deepEqual(codes, [201, 201, 429, 429, 429, 429], 'IP당 하루 5건');
 
   const t = { region: '서울', district: '마포구', level: 'beginner', orientation: 'both', has_coach: null, recruiting: true };
   assert.ok(score(t, { region: '서울', level: 'beginner', orientation: 'friendly' }) > 0);

@@ -171,16 +171,47 @@ const extra = (who) => `<label>${who}<input name="requester" maxlength="100"${wh
   <label>남길 말 (선택)<textarea name="message" maxlength="500" rows="2"></textarea></label>
   <label class="hp" aria-hidden="true">website<input name="website" tabindex="-1" autocomplete="off"></label>`;
 
-function requestDialog(team) {
+// 등록하려는 이름이 이미 있으면 폼 안에서 묻는다. true = 같은 팀(수정 요청으로), false = 이름만 같은 다른 팀(새로 등록).
+function askSameTeam(form, same) {
+  return new Promise((resolve) => {
+    const box = document.createElement('div');
+    box.className = 'same';
+    box.setAttribute('role', 'alert');
+    box.innerHTML = `<p><strong>${esc(same.name)}</strong> (${esc([same.region, same.district].filter(Boolean).join(' '))}) 팀이 이미 등록돼 있어요. 이 팀의 정보 수정 요청으로 보낼까요?</p>
+      <div><button type="button" class="btn primary" data-same="yes">네, 수정 요청할게요</button><button type="button" class="btn" data-same="no">아니요, 이름만 같은 다른 팀이에요</button></div>`;
+    box.onclick = (e) => {
+      if (!e.target.dataset.same) return;
+      box.remove();
+      resolve(e.target.dataset.same === 'yes');
+    };
+    const status = form.querySelector('.status');
+    status.textContent = ''; // 묻는 동안에는 '처리 중' 문구를 지우고 취소 버튼은 쓸 수 있게 둔다
+    form.querySelector('[data-close]').disabled = false;
+    status.before(box);
+    box.querySelector('button').focus();
+  });
+}
+
+function requestDialog(team, typed) {
+  // typed: 등록 폼에 적던 값. 수정 요청으로 넘어올 때 빈 칸이 아닌 값만 기존 정보 위에 미리 채운다. 이름은 기존 표기를 유지한다.
+  const shown = team && typed ? { ...team, ...Object.fromEntries(Object.entries(typed).filter(([k, v]) => v != null && k !== 'name')) } : team;
   openTeamDialog({
     title: team ? `${team.name} 정보 수정 요청` : '팀 등록 요청',
-    intro: team ? '바꾸고 싶은 항목만 고쳐서 보내주세요. 운영자가 확인한 뒤 반영해요.' : '운영자가 확인한 뒤 목록에 올려요. 모르는 항목은 비워두세요.',
-    team: team || {},
+    intro: typed ? '이미 등록된 팀이라 수정 요청으로 바꿨어요. 적어주신 내용을 채워 두었으니, 확인용 연락처를 적어 보내주세요.' : team ? '바꾸고 싶은 항목만 고쳐서 보내주세요. 운영자가 확인한 뒤 반영해요.' : '운영자가 확인한 뒤 목록에 올려요. 모르는 항목은 비워두세요.',
+    team: shown || {},
     extra: extra(team ? '확인용 연락처 — 팀 인스타 계정 등 (필수)' : '요청하는 분 연락처 (선택)'),
     submit: async (vals, form) => {
+      let confirmNew = false;
+      if (!team) {
+        const same = teams.filter((t) => norm(t.name) === norm(vals.name)).sort((a, b) => (b.region === vals.region) - (a.region === vals.region))[0];
+        if (same) {
+          if (await askSameTeam(form, same)) return requestDialog(same, vals);
+          confirmNew = true;
+        }
+      }
       const payload = team ? Object.fromEntries(Object.entries(vals).filter(([k, v]) => v !== (team[k] ?? null))) : vals;
       await api('POST', '/api/requests', {
-        type: team ? 'edit' : 'add', team_id: team && team.id, payload,
+        type: team ? 'edit' : 'add', team_id: team && team.id, payload, confirm_new: confirmNew,
         requester: form.elements.requester.value, message: form.elements.message.value, website: form.elements.website.value,
       });
       track('request_submit', { request_type: team ? 'edit' : 'add' });
