@@ -9,6 +9,11 @@ const { score } = require('./public/shared.js');
 
 (async () => {
   await ready;
+  // Slack 알림: 가짜 웹훅 서버로 받는다
+  const slack = [];
+  const hook = require('node:http').createServer((q, s) => { let d = ''; q.on('data', (c) => (d += c)).on('end', () => { slack.push(JSON.parse(d).text); s.end('ok'); }); });
+  await new Promise((r) => hook.listen(0, r));
+  process.env.SLACK_WEBHOOK_URL = `http://localhost:${hook.address().port}/`;
   await new Promise((r) => server.listen(0, r));
   const base = `http://localhost:${server.address().port}`;
   const auth = { Authorization: 'Basic ' + Buffer.from('a:pw').toString('base64') };
@@ -20,6 +25,7 @@ const { score } = require('./public/shared.js');
 
   assert.equal((await call('GET', '/api/teams'))[0], 200);
   assert.equal((await add('테스트FC', '@test_fc_zz'))[0], 201);
+  assert.ok(slack.length === 1 && slack[0].includes('새 팀 등록 요청') && slack[0].includes('테스트FC'), '등록 요청이 Slack으로 감');
   assert.equal((await add('테스트FC', 'https://instagram.com/test_fc_zz'))[0], 409, '같은 인스타 중복 차단');
   assert.equal((await call('POST', '/api/requests', { type: 'add', payload: { name: 'x', region: '서울', instagram: 'a', level: 'pro' } }))[0], 400, '잘못된 enum');
   assert.equal((await call('POST', '/api/requests', { type: 'add', website: 'spam', payload: {} }))[0], 201, '허니팟은 조용히 버림');
@@ -61,6 +67,8 @@ const { score } = require('./public/shared.js');
   assert.ok(score(t, { coach: true }) >= 0, '정보 없음은 제외하지 않음');
   assert.equal(score({ ...t, recruiting: null }, { recruiting: true }), -1);
 
+  assert.ok(slack.some((t) => t.includes('정보 수정 요청')), '수정 요청도 Slack으로 감');
+  hook.close();
   server.close();
   console.log('ok');
 })().catch((e) => { console.error(e); process.exit(1); });
