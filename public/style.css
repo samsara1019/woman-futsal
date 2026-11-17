@@ -154,3 +154,21 @@ thead th { color: var(--text-3); font-weight: 500; font-size: 12px; }
 .districts a { display: inline-flex; align-items: baseline; gap: 6px; min-height: 36px; padding: 4px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--text); text-decoration: none; font-size: 14px; line-height: 26px; transition: border-color 150ms var(--ease); }
 .districts a:hover { border-color: var(--line-strong); }
 .districts .num { color: var(--text-3); }
+
+/* 타일 지도: 칸 색의 진하기 = 팀 수 */
+.filters .map-toggle { margin-left: auto; }
+.map { display: flex; flex-wrap: wrap; gap: 24px 48px; padding: 20px 0; border-bottom: 1px solid var(--line); }
+.map h2 { font-size: 13px; font-weight: 500; color: var(--text-2); margin-bottom: 8px; }
+.tiles { display: grid; gap: 4px; }
+.tiles.kr { grid-template-columns: repeat(4, minmax(0, 80px)); }
+.tiles.seoul { grid-template-columns: repeat(6, minmax(0, 64px)); }
+.tile { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 52px; padding: 0; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--text); font-size: 12px; line-height: 1.3; cursor: pointer; transition: border-color 150ms var(--ease); }
+.tile .num { font-size: 15px; line-height: 1.1; min-height: 16px; }
+.tile[data-l="1"] { background: color-mix(in srgb, var(--turf) 12%, var(--card)); }
+.tile[data-l="2"] { background: color-mix(in srgb, var(--turf) 24%, var(--card)); }
+.tile[data-l="3"] { background: color-mix(in srgb, var(--turf) 38%, var(--card)); }
+.tile[data-l="4"] { background: color-mix(in srgb, var(--turf) 52%, var(--card)); }
+.tile:hover:not(:disabled) { border-color: var(--line-strong); }
+.tile:disabled { background: transparent; color: var(--text-3); cursor: default; }
+.tile[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+@media (max-width: 520px) { .filters .map-toggle { grid-column: 1 / -1; margin-left: 0; } }

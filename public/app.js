@@ -9,6 +9,44 @@ let mode = location.hash === '#all' ? 'results' : 'quiz'; // /#all 로 전체 �
 let prevK = 0; // 직전 렌더에서 공이 있던 지점 (전진 애니메이션의 출발점)
 let finishing = false;
 let q = ''; // 팀 이름 검색어
+let showMap = false;
+
+// 타일 지도: 실제 위치 관계대로 칸을 배치한다 (데이터가 시군구 단위라 핀 대신 칸). null은 빈 칸.
+const KR_TILES = [
+  ['인천', '서울', '경기', '강원'],
+  ['충남', '세종', '충북', '경북'],
+  ['전북', '대전', '대구', '울산'],
+  ['광주', '전남', '경남', '부산'],
+  [null, '제주', null, null],
+];
+const SEOUL_TILES = [
+  [null, null, null, '도봉구', '노원구', null],
+  [null, '은평구', '강북구', '성북구', '중랑구', null],
+  [null, '서대문구', '종로구', '동대문구', '광진구', '강동구'],
+  ['강서구', '마포구', '중구', '성동구', '송파구', null],
+  ['양천구', '영등포구', '용산구', '강남구', null, null],
+  ['구로구', '동작구', '서초구', null, null, null],
+  ['금천구', '관악구', null, null, null, null],
+];
+
+// key(region|district)별 팀 수를 칸에 표시. base는 이 지도가 고르는 항목을 뺀 나머지 필터.
+function tilesHTML(rows, cls, key, base) {
+  const counts = {};
+  for (const t of teams) if (t[key] && score(t, base) >= 0) counts[t[key]] = (counts[t[key]] || 0) + 1;
+  const max = Math.max(1, ...Object.values(counts));
+  return `<div class="tiles ${cls}">${rows.flat().map((name) => {
+    if (!name) return '<span></span>';
+    const n = counts[name] || 0;
+    const label = name.length > 2 ? name.replace(/구$/, '') : name;
+    // 색 단계는 제곱근 척도: 서울·경기만 진하고 나머지가 전부 같은 색이 되는 걸 막는다
+    return `<button class="tile" id="tile-${name}" data-tile="${key}" data-v="${name}" data-l="${n ? Math.ceil(4 * Math.sqrt(n / max)) : 0}" aria-pressed="${f[key] === name}" aria-label="${name} ${n}팀"${n ? '' : ' disabled'}><span>${label}</span><span class="num">${n || ''}</span></button>`;
+  }).join('')}</div>`;
+}
+
+const mapHTML = () => `<div class="map">
+    <div><h2>시도별 팀 수</h2>${tilesHTML(KR_TILES, 'kr', 'region', { ...f, region: '', district: '' })}</div>
+    ${f.region === '서울' ? `<div><h2>서울 구별 팀 수</h2>${tilesHTML(SEOUL_TILES, 'seoul', 'district', { ...f, district: '' })}</div>` : ''}
+  </div>`;
 
 // opts: [값, 라벨, 설명, 코트 위에 적을 짧은 라벨]
 const STEPS = [
@@ -121,7 +159,9 @@ function resultsHTML() {
       ${sel('f-orientation', '지향', f.orientation, [['friendly', '친선'], ['competition', '대회']])}
       ${check('f-coach', '코치 있는 팀', f.coach)}
       ${check('f-recruiting', '모집중만', f.recruiting)}
+      <button class="btn map-toggle" data-act="map" aria-expanded="${showMap}">${showMap ? '지도 닫기' : '지도로 보기'}</button>
     </div>
+    ${showMap ? mapHTML() : ''}
     <div id="list">${listHTML()}</div>
   </section>`;
 }
@@ -155,7 +195,7 @@ function showResults() { q = ''; finishing = false; prevK = 0; step = 0; mode = 
 app.addEventListener('click', (e) => {
   const out = e.target.closest('a[data-team]');
   if (out) return track('team_link_click', { team: out.dataset.team, link: out.textContent });
-  const el = e.target.closest('[data-opt],[data-act],[data-edit]');
+  const el = e.target.closest('[data-opt],[data-act],[data-edit],[data-tile]');
   if (!el || finishing) return;
   if (el.dataset.opt) {
     f[STEPS[step].key] = STEPS[step].opts[el.dataset.opt][0];
@@ -169,6 +209,16 @@ app.addEventListener('click', (e) => {
       return setTimeout(showResults, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 560);
     }
     step = next;
+  } else if (el.dataset.tile) {
+    // 지도 칸: 다시 누르면 선택 해제. 스크롤 위치는 그대로 둔다.
+    const key = el.dataset.tile;
+    f[key] = f[key] === el.dataset.v ? '' : el.dataset.v;
+    if (key === 'region') f.district = '';
+    q = '';
+    return render();
+  } else if (el.dataset.act === 'map') {
+    showMap = !showMap;
+    return render();
   } else if (el.dataset.act === 'back') {
     do step--; while (!active(step));
   } else if (el.dataset.act === 'all') {
