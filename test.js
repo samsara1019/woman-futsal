@@ -4,7 +4,7 @@ process.env.DB_PATH = ':memory:';
 process.env.SUPABASE_URL = ''; // 테스트는 항상 로컬 SQLite로
 process.env.ADMIN_PASSWORD = 'pw';
 const assert = require('node:assert/strict');
-const { server, ready } = require('./server');
+const { server, ready } = require('./lib/app');
 const { score } = require('./public/shared.js');
 
 (async () => {
