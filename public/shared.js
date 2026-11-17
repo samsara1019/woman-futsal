@@ -58,7 +58,7 @@ function card(t, edit) {
     ${t.coach_info ? `<p class="meta">코치 · ${esc(t.coach_info)}</p>` : ''}
     ${t.contact && join !== t.contact ? `<p class="meta">문의 · ${esc(t.contact)}</p>` : ''}
     <div class="card-foot">
-      ${join ? `<a class="btn primary" href="${esc(join)}" ${ext}>가입 문의</a>` : t.source_url ? `<a class="btn" href="${esc(t.source_url)}" ${ext}>모집글 보기</a>` : ''}
+      ${join ? `<a class="btn primary" href="${esc(join)}" ${ext}>가입 문의</a>` : t.source_url ? `<a class="btn" href="${esc(t.source_url)}" ${ext}>${/daangn\.com/.test(t.source_url) ? '모집글 보기' : '출처 보기'}</a>` : ''}
       ${t.instagram && join !== t.instagram ? `<a class="btn" href="${esc(t.instagram)}" ${ext}>인스타그램</a>` : ''}
       ${edit ? `<button class="link" data-edit="${t.id}">정보 수정 요청</button>` : ''}
     </div>
