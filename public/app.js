@@ -166,9 +166,36 @@ function resultsHTML() {
   </section>`;
 }
 
+// 팀의 모든 정보를 보여주는 창. 카드에는 줄여서 보이는 메모도 여기서는 전부 나온다.
+function detailDialog(t) {
+  const link = (url) => `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer" data-team="${esc(t.name)}">${esc(url)}</a>`;
+  const rows = [
+    ['지역', esc([t.region, t.district].filter(Boolean).join(' '))],
+    ['팀원 모집', t.recruiting == null ? '' : esc(fmt('recruiting', t.recruiting))],
+    ['실력', esc(LEVEL[t.level] || '')],
+    ['지향', esc(ORIENT[t.orientation] || '')],
+    ['코치', t.has_coach == null ? '' : esc(fmt('has_coach', t.has_coach))],
+    ['코치 정보', esc(t.coach_info || '')],
+    ['인원', t.members ? `${t.members}명` : ''],
+    ['소개', esc(t.note || '')],
+    ['메모', esc(t.memo || '')],
+    ['인스타그램', t.instagram ? link(t.instagram) : ''],
+    ['가입 문의', !t.contact ? '' : /^https?:\/\//.test(t.contact) ? link(t.contact) : esc(t.contact)],
+    ['출처', t.source_url ? link(t.source_url) : ''],
+    ['정보 수정일', esc((t.updated_at || '').slice(0, 10))],
+  ].filter((r) => r[1]);
+  const dlg = document.getElementById('dlg');
+  dlg.innerHTML = `<div class="detail"><h2>${esc(t.name)}</h2>
+    <dl>${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>
+    <div class="actions"><button class="btn" data-edit-from-detail>정보 수정 요청</button><button class="btn primary" data-close autofocus>닫기</button></div></div>`;
+  dlg.querySelector('[data-close]').onclick = () => dlg.close();
+  dlg.querySelector('[data-edit-from-detail]').onclick = () => { dlg.close(); requestDialog(t); };
+  dlg.showModal();
+}
+
 // 요청 폼 공통 부가 필드. website는 허니팟(사람에겐 안 보임).
 const extra = (who) => `<label>${who}<input name="requester" maxlength="100"${who.includes('필수') ? ' required' : ''}></label>
-  <label>남길 말 (선택)<textarea name="message" maxlength="500" rows="2"></textarea></label>
+  <label>운영자에게만 남길 말 (공개되지 않아요 · 선택)<textarea name="message" maxlength="500" rows="2"></textarea></label>
   <label class="hp" aria-hidden="true">website<input name="website" tabindex="-1" autocomplete="off"></label>`;
 
 // 등록하려는 이름이 이미 있으면 폼 안에서 묻는다. true = 같은 팀(수정 요청으로), false = 이름만 같은 다른 팀(새로 등록).
@@ -226,7 +253,7 @@ function showResults() { q = ''; finishing = false; prevK = 0; step = 0; mode = 
 app.addEventListener('click', (e) => {
   const out = e.target.closest('a[data-team]');
   if (out) return track('team_link_click', { team: out.dataset.team, link: out.textContent });
-  const el = e.target.closest('[data-opt],[data-act],[data-edit],[data-tile]');
+  const el = e.target.closest('[data-opt],[data-act],[data-edit],[data-detail],[data-tile]');
   if (!el || finishing) return;
   if (el.dataset.opt) {
     f[STEPS[step].key] = STEPS[step].opts[el.dataset.opt][0];
@@ -257,6 +284,8 @@ app.addEventListener('click', (e) => {
     return showResults();
   } else if (el.dataset.act === 'quiz') {
     f = blank(); q = ''; step = 0; prevK = 0; mode = 'quiz';
+  } else if (el.dataset.detail) {
+    return detailDialog(teams.find((t) => t.id === +el.dataset.detail));
   } else if (el.dataset.edit) {
     return requestDialog(teams.find((t) => t.id === +el.dataset.edit));
   }

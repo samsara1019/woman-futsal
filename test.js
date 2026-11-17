@@ -41,11 +41,11 @@ const { score } = require('./public/shared.js');
   assert.equal(team.instagram, 'https://www.instagram.com/test_fc_zz/');
 
   assert.equal((await call('POST', '/api/requests', { type: 'edit', team_id: team.id, payload: { recruiting: true } }))[0], 400, '수정 요청은 확인용 연락처 필수');
-  assert.equal((await call('POST', '/api/requests', { type: 'edit', team_id: team.id, payload: { recruiting: true, members: 14 }, requester: '@test_fc_zz' }))[0], 201);
+  assert.equal((await call('POST', '/api/requests', { type: 'edit', team_id: team.id, payload: { recruiting: true, members: 14, memo: '회비 월 3만원\n풋살화 필수' }, requester: '@test_fc_zz' }))[0], 201);
   [, reqs] = await call('GET', '/api/admin/requests', null, auth);
   await call('POST', `/api/admin/requests/${reqs[0].id}`, { action: 'approve' }, auth);
   team = (await call('GET', '/api/teams'))[1].find((t) => t.id === team.id);
-  assert.deepEqual([team.recruiting, team.members, team.level], [true, 14, 'beginner']);
+  assert.deepEqual([team.recruiting, team.members, team.level, team.memo], [true, 14, 'beginner', '회비 월 3만원\n풋살화 필수']);
 
   assert.equal((await call('PUT', `/api/admin/teams/${team.id}`, { level: 'advanced' }, auth))[0], 200);
   assert.equal((await call('PUT', `/api/admin/teams/${team.id}`, { level: 'advanced' }))[0], 401);

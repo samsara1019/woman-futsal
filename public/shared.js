@@ -19,6 +19,7 @@ const FORM_FIELDS = [
   ['members', '인원', 'number'],
   ['recruiting', '팀원 모집 여부', 'bool', YESNO.recruiting],
   ['note', '한 줄 소개 (활동 요일, 구장 등)', 'text', 200],
+  ['memo', '메모 (모두에게 공개돼요 · 회비, 준비물, 가입 조건 등)', 'textarea', 1000],
 ];
 const ADMIN_FIELDS = [...FORM_FIELDS, ['source_url', '출처 URL', 'text', 500]];
 const LABELS = Object.fromEntries(ADMIN_FIELDS.map((f) => [f[0], f[1]]));
@@ -55,12 +56,13 @@ function card(t, edit) {
     <div class="card-head"><h2>${esc(t.name)}</h2><span class="loc">${esc([t.region, t.district].filter(Boolean).join(' '))}</span></div>
     ${facts.length ? `<p class="facts">${facts.map((x) => `<span>${x}</span>`).join('')}</p>` : ''}
     ${t.note ? `<p class="note">${esc(t.note)}</p>` : ''}
+    ${t.memo ? `<p class="memo${edit ? ' clamp' : ''}">${esc(t.memo)}</p>` : ''}
     ${t.coach_info ? `<p class="meta">코치 · ${esc(t.coach_info)}</p>` : ''}
     ${t.contact && join !== t.contact ? `<p class="meta">문의 · ${esc(t.contact)}</p>` : ''}
     <div class="card-foot">
       ${join ? `<a class="btn primary" href="${esc(join)}" ${ext}>가입 문의</a>` : t.source_url ? `<a class="btn" href="${esc(t.source_url)}" ${ext}>${/daangn\.com/.test(t.source_url) ? '모집글 보기' : '출처 보기'}</a>` : ''}
       ${t.instagram && join !== t.instagram ? `<a class="btn" href="${esc(t.instagram)}" ${ext}>인스타그램</a>` : ''}
-      ${edit ? `<button class="link" data-edit="${t.id}">정보 수정 요청</button>` : ''}
+      ${edit ? `<button class="link" data-detail="${t.id}">자세히 보기</button><button class="link" data-edit="${t.id}">정보 수정 요청</button>` : ''}
     </div>
   </article>`;
 }
@@ -75,6 +77,8 @@ function teamFormHTML(t = {}, admin = false) {
         .map(([val, l]) => `<option value="${val}"${String(v) === val ? ' selected' : ''}>${l}</option>`).join('')}</select>`;
     } else if (type === 'number') {
       input = `<input name="${k}" type="number" min="1" max="999" inputmode="numeric" value="${esc(v)}">`;
+    } else if (type === 'textarea') {
+      input = `<textarea name="${k}" maxlength="${opt}" rows="3">${esc(v)}</textarea>`;
     } else {
       input = `<input name="${k}" maxlength="${opt}" value="${esc(v)}"${req}${k === 'district' ? ' list="gu"' : ''}>`;
     }
