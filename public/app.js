@@ -107,7 +107,7 @@ function listHTML() {
   const filtered = byName || Object.values(f).some(Boolean);
   return `<p class="count"><span class="total"><span class="num">${list.length}</span>팀</span><span class="count-note">${byName ? '이름 검색 결과 · 전체 지역' : filtered ? '조건에 맞는 팀' : '전체'}</span>
       ${filtered ? '<button class="link" data-act="all">전체 보기</button>' : ''}<button class="link" data-act="quiz">질문 다시 하기</button></p>
-    ${list.length ? `<div class="cards">${list.map(card).join('')}</div>`
+    ${list.length ? `<div class="cards">${list.map((t) => card(t, true)).join('')}</div>`
       : `<p class="empty">${byName ? '그 이름의 팀을 찾지 못했어요. 아직 목록에 없다면 위의 팀 등록 요청으로 알려주세요.' : '조건에 딱 맞는 팀을 아직 찾지 못했어요. 조건을 줄이거나 전체 팀을 둘러보세요.<br>아는 팀이 있다면 위의 팀 등록 요청으로 알려주세요.'}</p>`}`;
 }
 
@@ -124,28 +124,6 @@ function resultsHTML() {
     </div>
     <div id="list">${listHTML()}</div>
   </section>`;
-}
-
-function card(t) {
-  const join = /^https?:\/\//.test(t.contact || '') ? t.contact : t.instagram;
-  const ext = `target="_blank" rel="noopener noreferrer" data-team="${esc(t.name)}"`;
-  const facts = [
-    t.recruiting ? '<span class="status on">모집중</span>' : t.recruiting === false ? '<span class="status">모집 안 함</span>' : '',
-    LEVEL[t.level], ORIENT[t.orientation], t.has_coach == null ? '' : YESNO.has_coach[t.has_coach],
-    t.members ? `<span class="num">${t.members}</span>명` : '',
-  ].filter(Boolean);
-  return `<article class="card">
-    <div class="card-head"><h2>${esc(t.name)}</h2><span class="loc">${esc([t.region, t.district].filter(Boolean).join(' '))}</span></div>
-    ${facts.length ? `<p class="facts">${facts.map((x) => `<span>${x}</span>`).join('')}</p>` : ''}
-    ${t.note ? `<p class="note">${esc(t.note)}</p>` : ''}
-    ${t.coach_info ? `<p class="meta">코치 · ${esc(t.coach_info)}</p>` : ''}
-    ${t.contact && join !== t.contact ? `<p class="meta">문의 · ${esc(t.contact)}</p>` : ''}
-    <div class="card-foot">
-      ${join ? `<a class="btn primary" href="${esc(join)}" ${ext}>가입 문의</a>` : t.source_url ? `<a class="btn" href="${esc(t.source_url)}" ${ext}>모집글 보기</a>` : ''}
-      ${t.instagram && join !== t.instagram ? `<a class="btn" href="${esc(t.instagram)}" ${ext}>인스타그램</a>` : ''}
-      <button class="link" data-edit="${t.id}">정보 수정 요청</button>
-    </div>
-  </article>`;
 }
 
 // 요청 폼 공통 부가 필드. website는 허니팟(사람에겐 안 보임).

@@ -42,6 +42,29 @@ function score(t, f) {
   return s + (t.recruiting ? 0.5 : 0);
 }
 
+// 팀 카드. 브라우저(결과 목록)와 서버(지역별 페이지)가 같이 쓴다. edit=true면 수정 요청 버튼을 붙인다.
+function card(t, edit) {
+  const join = /^https?:\/\//.test(t.contact || '') ? t.contact : t.instagram;
+  const ext = `target="_blank" rel="noopener noreferrer" data-team="${esc(t.name)}"`;
+  const facts = [
+    t.recruiting ? '<span class="status on">모집중</span>' : t.recruiting === false ? '<span class="status">모집 안 함</span>' : '',
+    LEVEL[t.level], ORIENT[t.orientation], t.has_coach == null ? '' : YESNO.has_coach[t.has_coach],
+    t.members ? `<span class="num">${t.members}</span>명` : '',
+  ].filter(Boolean);
+  return `<article class="card">
+    <div class="card-head"><h2>${esc(t.name)}</h2><span class="loc">${esc([t.region, t.district].filter(Boolean).join(' '))}</span></div>
+    ${facts.length ? `<p class="facts">${facts.map((x) => `<span>${x}</span>`).join('')}</p>` : ''}
+    ${t.note ? `<p class="note">${esc(t.note)}</p>` : ''}
+    ${t.coach_info ? `<p class="meta">코치 · ${esc(t.coach_info)}</p>` : ''}
+    ${t.contact && join !== t.contact ? `<p class="meta">문의 · ${esc(t.contact)}</p>` : ''}
+    <div class="card-foot">
+      ${join ? `<a class="btn primary" href="${esc(join)}" ${ext}>가입 문의</a>` : t.source_url ? `<a class="btn" href="${esc(t.source_url)}" ${ext}>모집글 보기</a>` : ''}
+      ${t.instagram && join !== t.instagram ? `<a class="btn" href="${esc(t.instagram)}" ${ext}>인스타그램</a>` : ''}
+      ${edit ? `<button class="link" data-edit="${t.id}">정보 수정 요청</button>` : ''}
+    </div>
+  </article>`;
+}
+
 function teamFormHTML(t = {}, admin = false) {
   return (admin ? ADMIN_FIELDS : FORM_FIELDS).map(([k, label, type, opt]) => {
     const v = t[k];
@@ -92,4 +115,4 @@ async function api(method, url, data) {
   return j;
 }
 
-if (typeof module !== 'undefined') module.exports = { score };
+if (typeof module !== 'undefined') module.exports = { score, card, esc, REGIONS };

@@ -43,6 +43,13 @@ const { score } = require('./public/shared.js');
   assert.equal((await call('PUT', `/api/admin/teams/${team.id}`, { level: 'advanced' }, auth))[0], 200);
   assert.equal((await call('PUT', `/api/admin/teams/${team.id}`, { level: 'advanced' }))[0], 401);
 
+  const page = await fetch(base + '/teams/' + encodeURIComponent('서울') + '/' + encodeURIComponent('마포구'));
+  const html = await page.text();
+  assert.equal(page.status, 200);
+  assert.ok(html.includes('서울 마포구 여자풋살팀') && html.includes('테스트FC'), '지역 페이지에 팀이 서버 렌더링됨');
+  assert.equal((await fetch(base + '/teams/' + encodeURIComponent('없는곳'))).status, 404);
+  assert.ok((await (await fetch(base + '/sitemap.xml')).text()).includes('/teams/%EC%84%9C%EC%9A%B8</loc>'));
+
   const codes = [];
   for (let i = 0; i < 6; i++) codes.push((await add(`스팸${i}`, `spam_${i}`))[0]);
   assert.deepEqual(codes, [201, 201, 201, 429, 429, 429], 'IP당 하루 5건');
