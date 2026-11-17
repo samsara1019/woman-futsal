@@ -27,7 +27,8 @@ const { score } = require('./public/shared.js');
   assert.equal((await add('테스트FC', '@test_fc_zz'))[0], 201);
   assert.ok(slack.length === 1 && slack[0].includes('새 팀 등록 요청') && slack[0].includes('테스트FC'), '등록 요청이 Slack으로 감');
   assert.equal((await add('테스트FC', 'https://instagram.com/test_fc_zz'))[0], 409, '같은 인스타 중복 차단');
-  assert.equal((await call('POST', '/api/requests', { type: 'add', payload: { name: 'x', region: '서울', instagram: 'a', level: 'pro' } }))[0], 400, '잘못된 enum');
+  assert.deepEqual((await call('POST', '/api/requests', { type: 'add', payload: { name: 'x', region: '서울', instagram: 'a', level: 'pro' } })).map((x) => x.field || x), [400, 'level'], '잘못된 enum은 어느 칸인지 알려줌');
+  assert.equal((await call('POST', '/api/requests', { type: 'add', payload: { name: 'x', region: '서울' } }))[1].field, 'instagram', '연락 수단이 없으면 인스타 칸을 가리킴');
   assert.equal((await call('POST', '/api/requests', { type: 'add', website: 'spam', payload: {} }))[0], 201, '허니팟은 조용히 버림');
 
   assert.equal((await call('GET', '/api/admin/requests'))[0], 401);

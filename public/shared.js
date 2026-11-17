@@ -91,10 +91,23 @@ function readTeamForm(form, admin = false) {
   return o;
 }
 
+// 문제가 된 칸을 빨갛게 표시하고 그 칸으로 스크롤한다. 칸을 고치기 시작하면 표시가 사라진다.
+function markField(form, name, message) {
+  const el = form.elements[name];
+  if (!el || !el.closest) return;
+  el.setAttribute('aria-invalid', 'true');
+  const note = Object.assign(document.createElement('span'), { className: 'field-error', textContent: message });
+  el.after(note);
+  const clear = () => { el.removeAttribute('aria-invalid'); note.remove(); el.removeEventListener('input', clear); };
+  el.addEventListener('input', clear);
+  el.scrollIntoView({ block: 'center' });
+  el.focus({ preventScroll: true });
+}
+
 // 팀 폼 다이얼로그. submit(values, form)이 throw하면 메시지를 폼에 표시한다.
 function openTeamDialog({ title, intro = '', team = {}, admin = false, extra = '', button = '보내기', submit }) {
   const dlg = document.getElementById('dlg');
-  dlg.innerHTML = `<form><h2>${esc(title)}</h2>${intro ? `<p class="hint">${esc(intro)}</p>` : ''}${teamFormHTML(team, admin)}${extra}
+  dlg.innerHTML = `<form novalidate><h2>${esc(title)}</h2>${intro ? `<p class="hint">${esc(intro)}</p>` : ''}${teamFormHTML(team, admin)}${extra}
     <p class="status" role="status"></p>
     <div class="actions"><button type="button" class="btn" data-close>취소</button><button class="btn primary">${esc(button)}</button></div></form>`;
   const form = dlg.querySelector('form');
@@ -102,10 +115,14 @@ function openTeamDialog({ title, intro = '', team = {}, admin = false, extra = '
   form.onsubmit = async (e) => {
     e.preventDefault();
     const st = form.querySelector('.status');
+    form.querySelectorAll('.field-error').forEach((n) => n.remove());
+    form.querySelectorAll('[aria-invalid]').forEach((n) => n.removeAttribute('aria-invalid'));
+    const empty = [...form.elements].find((el) => el.required && !el.value.trim());
+    if (empty) { st.textContent = ''; return markField(form, empty.name, '꼭 필요한 항목이에요'); }
     const buttons = [...form.querySelectorAll('button')];
     buttons.forEach((b) => { b.disabled = true; }); // 응답이 올 때까지 잠가 중복 전송을 막는다
     st.textContent = '처리 중…';
-    try { await submit(readTeamForm(form, admin), form); st.textContent = ''; } catch (err) { st.textContent = err.message; } finally { buttons.forEach((b) => { b.disabled = false; }); }
+    try { await submit(readTeamForm(form, admin), form); st.textContent = ''; } catch (err) { st.textContent = err.message; buttons.forEach((b) => { b.disabled = false; }); if (err.field) markField(form, err.field, err.message); } finally { buttons.forEach((b) => { b.disabled = false; }); }
   };
   dlg.showModal();
 }
@@ -113,7 +130,7 @@ function openTeamDialog({ title, intro = '', team = {}, admin = false, extra = '
 async function api(method, url, data) {
   const r = await fetch(url, { method, headers: data ? { 'Content-Type': 'application/json' } : {}, body: data ? JSON.stringify(data) : undefined });
   const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(j.error || '요청에 실패했어요');
+  if (!r.ok) throw Object.assign(new Error(j.error || '요청에 실패했어요'), { field: j.field });
   return j;
 }
 
