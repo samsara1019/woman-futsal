@@ -102,8 +102,10 @@ function openTeamDialog({ title, intro = '', team = {}, admin = false, extra = '
   form.onsubmit = async (e) => {
     e.preventDefault();
     const st = form.querySelector('.status');
+    const buttons = [...form.querySelectorAll('button')];
+    buttons.forEach((b) => { b.disabled = true; }); // 응답이 올 때까지 잠가 중복 전송을 막는다
     st.textContent = '처리 중…';
-    try { await submit(readTeamForm(form, admin), form); } catch (err) { st.textContent = err.message; }
+    try { await submit(readTeamForm(form, admin), form); st.textContent = ''; } catch (err) { st.textContent = err.message; } finally { buttons.forEach((b) => { b.disabled = false; }); }
   };
   dlg.showModal();
 }

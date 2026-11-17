@@ -42,6 +42,7 @@ main { max-width: 1056px; margin: 0 auto; padding: 8px 16px 64px; min-height: 72
 .link { background: none; border: 0; padding: 4px 0; color: var(--text-2); text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: 4px; font-size: 14px; cursor: pointer; transition: color 150ms var(--ease); }
 .link:hover { color: var(--text); }
 .link.danger { color: var(--danger); }
+button:disabled { opacity: .5; cursor: default; }
 
 /* 질문: 모바일은 코트가 위(가로), 넓은 화면은 오른쪽(세로) */
 .quiz { display: grid; gap: 24px; max-width: 928px; margin: 0 auto; padding-top: 8px; }
@@ -136,7 +137,7 @@ thead th { color: var(--text-3); font-weight: 500; font-size: 12px; }
 .diff th { width: 34%; color: var(--text-2); font-weight: 400; }
 .diff td { overflow-wrap: anywhere; }
 .diff .old { color: var(--text-3); text-decoration: line-through; }
-.diff tr:first-child .old { text-decoration: none; }
+.diff-head > * { color: var(--text-3); font-size: 12px; font-weight: 500; }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 
