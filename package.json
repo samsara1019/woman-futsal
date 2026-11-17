@@ -1,0 +1,6 @@
+{
+  "name": "womanfutsal",
+  "private": true,
+  "scripts": { "start": "node server.js", "test": "node test.js" },
+  "engines": { "node": ">=22.13" }
+}
