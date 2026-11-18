@@ -88,7 +88,7 @@ input[type=checkbox] { width: 16px; height: 16px; margin: 0; accent-color: var(-
 select, input:not([type=checkbox]), textarea { min-height: 36px; padding: 4px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); width: 100%; transition: border-color 150ms var(--ease); }
 select:hover, input:not([type=checkbox]):hover, textarea:hover { border-color: var(--line-strong); }
 .filters select { width: auto; min-width: 104px; }
-.filters .search input { width: 176px; }
+.filters .search input { width: 216px; }
 .count { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: baseline; margin: 24px 0 16px; }
 .total { font-size: 16px; }
 .total .num { font-size: 32px; margin-right: 2px; }

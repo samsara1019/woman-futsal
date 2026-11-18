@@ -138,21 +138,25 @@ const norm = (s) => s.toLowerCase().replace(/\s/g, '');
 
 // 검색 입력 중에는 이 부분만 다시 그린다 (입력창을 다시 그리면 한글 조합이 끊긴다)
 function listHTML() {
-  const byName = norm(q);
-  // 이름 검색은 다른 필터를 무시하고 전체 팀에서 찾는다
-  const list = (byName ? teams.filter((t) => norm(t.name).includes(byName)).map((t) => [0, t]) : teams.map((t) => [score(t, f), t]).filter((x) => x[0] >= 0))
+  // 검색어는 띄어쓰기로 나눠 모두 포함하는 팀을 찾는다 ("서울 비기너"). 이름·지역·소개·메모·코치 정보·실력·지향·인스타를 본다.
+  const terms = q.split(/\s+/).map(norm).filter(Boolean);
+  const byName = terms.length > 0;
+  const text = (t) => norm([t.name, t.region, t.district, t.note, t.memo, t.coach_info, LEVEL[t.level], ORIENT[t.orientation], t.instagram].filter(Boolean).join(' '));
+  // 검색은 다른 필터를 무시하고 전체 팀에서 찾는다. 이름에 맞은 팀을 앞에 둔다.
+  const hit = (t) => { const all = text(t), name = norm(t.name); return terms.every((w) => all.includes(w)) ? [terms.some((w) => name.includes(w)) ? 1 : 0, t] : null; };
+  const list = (byName ? teams.map(hit).filter(Boolean) : teams.map((t) => [score(t, f), t]).filter((x) => x[0] >= 0))
     .sort((a, b) => b[0] - a[0] || a[1].name.localeCompare(b[1].name, 'ko')).map((x) => x[1]);
   const filtered = byName || Object.values(f).some(Boolean);
-  return `<p class="count"><span class="total"><span class="num">${list.length}</span>팀</span><span class="count-note">${byName ? '이름 검색 결과 · 전체 지역' : filtered ? '조건에 맞는 팀' : '전체'}</span>
+  return `<p class="count"><span class="total"><span class="num">${list.length}</span>팀</span><span class="count-note">${byName ? '검색 결과 · 전체 지역' : filtered ? '조건에 맞는 팀' : '전체'}</span>
       ${filtered ? '<button class="link" data-act="all">전체 보기</button>' : ''}<button class="link" data-act="quiz">질문 다시 하기</button></p>
     ${list.length ? `<div class="cards">${list.map((t) => card(t, true)).join('')}</div>`
-      : `<p class="empty">${byName ? '그 이름의 팀을 찾지 못했어요. 아직 목록에 없다면 위의 팀 등록 요청으로 알려주세요.' : '조건에 딱 맞는 팀을 아직 찾지 못했어요. 조건을 줄이거나 전체 팀을 둘러보세요.<br>아는 팀이 있다면 위의 팀 등록 요청으로 알려주세요.'}</p>`}`;
+      : `<p class="empty">${byName ? '검색어에 맞는 팀을 찾지 못했어요. 아직 목록에 없다면 위의 팀 등록 요청으로 알려주세요.' : '조건에 딱 맞는 팀을 아직 찾지 못했어요. 조건을 줄이거나 전체 팀을 둘러보세요.<br>아는 팀이 있다면 위의 팀 등록 요청으로 알려주세요.'}</p>`}`;
 }
 
 function resultsHTML() {
   return `<section class="results">
     <div class="filters">
-      <label class="search">팀 이름<input type="search" id="f-q" value="${esc(q)}" autocomplete="off" enterkeyhint="search"></label>
+      <label class="search">검색<input type="search" id="f-q" value="${esc(q)}" placeholder="팀 이름, 지역, 소개, 메모" autocomplete="off" enterkeyhint="search"></label>
       ${sel('f-region', '지역', f.region, REGIONS.map((r) => [r, r]))}
       ${f.region === '서울' ? sel('f-district', '구', f.district, SEOUL_GU.map((g) => [g, g])) : ''}
       ${sel('f-level', '실력', f.level, Object.entries(LEVEL))}
